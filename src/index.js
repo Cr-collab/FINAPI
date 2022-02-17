@@ -123,4 +123,35 @@ app.post('/withdraw', verifyIfExistsCpf, (request, response) => {
   return response.status(201).send()
 })
 
+app.get('/statement/date', verifyIfExistsCpf, (request, response) => {
+  const { customer } = request
+
+  const { date } = request.query
+
+  const dateFormat = new Date(date + ' 00:00')
+
+  console.log(dateFormat, 'sajcfbhasdbfhbashfbh')
+
+  const statement = customer.statement.filter(
+    statement =>
+      statement.createdAt.toDateString() === new Date(dateFormat).toDateString()
+  )
+
+  return response.json(statement)
+})
+
+app.put('/account', verifyIfExistsCpf, (request, response) => {
+  const { name } = request.body
+  const { customer } = request
+
+  customer.name = name
+
+  return response.status(201).send()
+})
+
+app.get('/account', verifyIfExistsCpf, (request, response) => {
+  const { customer } = request
+
+  return response.json(customer)
+})
 app.listen(3333)
