@@ -28,6 +28,19 @@ function verifyIfExistsCpf(request, response, next) {
   next()
 }
 
+function getBalance(statement) {
+  const balance = statement.reduce((acc, operation) => {
+    if (operation.type === 'credit') {
+      return acc + operation.amount
+    } else {
+      return acc - operation.amount
+    }
+  }, 0)
+
+  return balance
+}
+
+//criando conta
 app.post('/account', (request, response) => {
   const { cpf, name } = request.body
 
@@ -57,10 +70,57 @@ app.post('/account', (request, response) => {
 // entre a rota e reuisição caso o midllawares seja só para um rota
 // e utilizando app.use(middlawares) qunado é para todas ad rotas
 
+// pegando os nosso extrato
 app.get('/statement', verifyIfExistsCpf, (request, response) => {
   const { customer } = request
 
   return response.json(customer.statement)
+})
+
+// deposito
+app.post('/deposit', verifyIfExistsCpf, (request, response) => {
+  const { descprition, amount } = request.body
+
+  const { customer } = request
+
+  const statementOperation = {
+    descprition,
+    amount,
+    createdAt: new Date(),
+    type: 'credit'
+  }
+
+  customer.statement.push(statementOperation)
+
+  console.log(customer.statement)
+
+  return response.status(201).send()
+})
+
+// Saque
+
+app.post('/withdraw', verifyIfExistsCpf, (request, response) => {
+  const { amount, descprition } = request.body
+
+  const { customer } = request
+
+  const balance = getBalance(customer.statement)
+  if (balance < amount) {
+    return response.status(400).json({ error: 'Insufficient funds!' })
+  }
+
+  const statementOperation = {
+    descprition,
+    amount,
+    createdAt: new Date(),
+    type: 'debit'
+  }
+
+  console.log(statementOperation)
+
+  customer.statement.push(statementOperation)
+
+  return response.status(201).send()
 })
 
 app.listen(3333)
