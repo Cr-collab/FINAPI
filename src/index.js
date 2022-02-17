@@ -13,6 +13,21 @@ const customers = []
  *  id - uuid
  *  statement - []
  */
+
+// middleware
+function verifyIfExistsCpf(request, response, next) {
+  const { cpf } = request.headers
+
+  const customer = customers.find(customer => customer.cpf === cpf)
+
+  if (!customer)
+    return response.status(400).json({ error: 'Customer not Found' })
+
+  request.customer = customer
+  // para repassar um valor para o a nossa rota
+  next()
+}
+
 app.post('/account', (request, response) => {
   const { cpf, name } = request.body
 
@@ -38,4 +53,14 @@ app.post('/account', (request, response) => {
   return response.status(201).send()
 })
 
-app.listen(3333, () => console.log('Api Monstra do FinApi 🚗🚗🚗'))
+// formas de voce utilizar o middleweres
+// entre a rota e reuisição caso o midllawares seja só para um rota
+// e utilizando app.use(middlawares) qunado é para todas ad rotas
+
+app.get('/statement', verifyIfExistsCpf, (request, response) => {
+  const { customer } = request
+
+  return response.json(customer.statement)
+})
+
+app.listen(3333)
